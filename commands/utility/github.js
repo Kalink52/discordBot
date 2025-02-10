@@ -11,9 +11,9 @@ module.exports = {
         .setRequired(true)
     ),
   async execute(interaction) {
-    const { username } = interaction.options.getString("username");
+    const username = interaction.options.getString("username");
     // GitHub API endpoint for checking streak
-
+    // console.log(`Check ${username}`);
     const response = await fetch(
       `https://api.github.com/users/${username}/events`
     );
