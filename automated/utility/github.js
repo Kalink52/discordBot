@@ -1,8 +1,6 @@
 const axios = require("axios");
 const moment = require("moment");
-
-const GITHUB_USERNAME = "kalink52"; // Replace with your GitHub username
-// const GITHUB_TOKEN = 'your-personal-access-token'; // Replace with your GitHub token
+GITHUB_USERNAME = "Kalink52"
 
 async function getConsecutiveCommitDays() {
   try {
