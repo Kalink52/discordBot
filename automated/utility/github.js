@@ -1,7 +1,7 @@
-const { REST, Routes, SlashCommandBuilder } = require("discord.js");
+const { CronJob } = require("cron");
+const { channelId } = require("../../config.json");
 const axios = require("axios");
 const moment = require("moment");
-const { CronJob } = require('cron');
 async function getCommitStreak(username) {
   try {
     const today = moment().utc().startOf("day");
@@ -59,19 +59,31 @@ async function getCommitStreak(username) {
   }
 }
 
-
-const dailyCheck = new CronJob('32 11 * * *', async () => {
-    console.log('🔍 Running daily GitHub streak check...');
-
-    const username = 'your-github-username'; // Replace dynamically if needed
-    const streak = await getCommitStreak(Kalink52);
-
-    if (streak > 0) {
-        console.log(`🔥 ${username} has coded for ${streak} days in a row!`);
-    } else {
-        console.log(`❌ No commits found for ${username}.`);
-    }
-});
-
-// Start the cron job
-dailyCheck.start();
+function github(client) {
+  const job = new CronJob(
+    "0 11 * * *",
+    async () => {
+      let micahCommits = await getCommitStreak("Kalink52");
+      let hannahCommits = await getCommitStreak("Hannah-finch");
+      client.channels.cache
+        .get(channelId)
+        .send(`Micah coded ${micahCommits} days in a row.`);
+      client.channels.cache
+        .get(channelId)
+        .send(`Hannah coded ${hannahCommits} days in a row`);
+      let message =
+        "Both are equal so Micah is winning because he coded the bot";
+      if (micahCommits > hannahCommits) {
+        message = "Micah is winning";
+      }
+      if (hannahCommits > micahCommits) {
+        message = "Hannah is winning";
+      }
+      client.channels.cache.get(channelId).send(message);
+    },
+    null,
+    true,
+    "America/New_York"
+  );
+}
+module.exports = github;
