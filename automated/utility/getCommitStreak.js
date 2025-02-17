@@ -1,10 +1,6 @@
-const { REST, Routes, SlashCommandBuilder } = require("discord.js");
 const axios = require("axios");
 const moment = require("moment");
-const { CronJob } = require("cron");
-const client = require("../../index")
-
-async function getCommitStreak(username) {
+module.exports = async function getCommitStreak(username) {
   try {
     const today = moment().utc().startOf("day");
 
@@ -59,34 +55,4 @@ async function getCommitStreak(username) {
     );
     return -3; // Error case
   }
-}
-
-
-module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("github")
-    .setDescription("Check a GitHub user’s coding streak.")
-    .addStringOption((option) =>
-      option
-        .setName("username")
-        .setDescription("GitHub username to check")
-        .setRequired(true)
-    ),
-  async execute(interaction) {
-    const username = interaction.options.getString("username");
-    await interaction.reply(`🔍 Checking GitHub streak for **${username}**...`);
-    const streak = await getCommitStreak(username);
-
-    if (streak === -1) {
-      interaction.editReply(`❌ No commits found for **${username}**.`);
-    } else if (streak === -3) {
-      interaction.editReply(
-        `❌ Error fetching commit data for **${username}**.`
-      );
-    } else {
-      interaction.editReply(
-        `🔥 **${username}** has coded for **${streak}** days in a row!`
-      );
-    }
-  },
 };

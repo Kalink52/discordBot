@@ -1,41 +1,35 @@
+const { REST, Routes, SlashCommandBuilder } = require("discord.js");
 const axios = require("axios");
 const moment = require("moment");
-GITHUB_USERNAME = "Kalink52"
-
-async function getConsecutiveCommitDays() {
+const { CronJob } = require('cron');
+async function getCommitStreak(username) {
   try {
     const today = moment().utc().startOf("day");
-    const pastDate = today.clone().subtract(90, "days").toISOString();
 
-    // Get list of repositories
-    const reposResponse = await axios.get(
-      `https://api.github.com/users/${GITHUB_USERNAME}/repos`,
-      {
-        // headers: { Authorization: `token ${GITHUB_TOKEN}` }
-      }
+    // Fetch user's public events (includes push events)
+    const eventsResponse = await axios.get(
+      `https://api.github.com/users/${username}/events/public`
     );
+    const events = eventsResponse.data;
 
-    const repos = reposResponse.data.map((repo) => repo.name);
+    if (!events.length) return -1; // No public events found
+
     let commitDates = new Set();
 
-    // Fetch commits for each repo
-    for (const repo of repos) {
-      const commitsResponse = await axios.get(
-        `https://api.github.com/repos/${GITHUB_USERNAME}/${repo}/commits`,
-        {
-          // headers: { Authorization: `token ${GITHUB_TOKEN}` },
-          params: { since: pastDate },
-        }
-      );
+    // Filter push events and extract commit dates
+    events.forEach((event) => {
+      if (event.type === "PushEvent") {
+        event.payload.commits.forEach((commit) => {
+          const commitDate = moment(event.created_at)
+            .utc()
+            .startOf("day")
+            .format("YYYY-MM-DD");
+          commitDates.add(commitDate);
+        });
+      }
+    });
 
-      commitsResponse.data.forEach((commit) => {
-        const commitDate = moment(commit.commit.author.date)
-          .utc()
-          .startOf("day")
-          .format("YYYY-MM-DD");
-        commitDates.add(commitDate);
-      });
-    }
+    if (commitDates.size === 0) return -1; // No commits found
 
     // Convert to sorted array of unique commit days
     const commitDays = [...commitDates].sort().reverse();
@@ -55,13 +49,29 @@ async function getConsecutiveCommitDays() {
       }
     }
 
-    console.log(`🔥 You have coded for ${streak} days in a row!`);
+    return streak;
   } catch (error) {
     console.error(
       "Error fetching data:",
       error.response?.data || error.message
     );
+    return -3; // Error case
   }
 }
 
-getConsecutiveCommitDays();
+
+const dailyCheck = new CronJob('32 11 * * *', async () => {
+    console.log('🔍 Running daily GitHub streak check...');
+
+    const username = 'your-github-username'; // Replace dynamically if needed
+    const streak = await getCommitStreak(Kalink52);
+
+    if (streak > 0) {
+        console.log(`🔥 ${username} has coded for ${streak} days in a row!`);
+    } else {
+        console.log(`❌ No commits found for ${username}.`);
+    }
+});
+
+// Start the cron job
+dailyCheck.start();

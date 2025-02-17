@@ -2,8 +2,13 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { Client, Collection, Events, GatewayIntentBits } = require("discord.js");
-const { token } = require("./config.json");
+const { token, channelId } = require("./config.json");
 
+const { CronJob } = require("cron");
+const getCommitStreak = require("./automated/utility/getCommitStreak");
+
+// dault channel bot posts to
+const botChannel = channelId;
 // Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
@@ -63,3 +68,32 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
   }
 });
+client.on("ready", async (client) => {
+  const job = new CronJob(
+    "0 11 * * *",
+    async () => {
+      let micahCommits = await getCommitStreak("Kalink52");
+      let hannahCommits = await getCommitStreak("Hannah-finch");
+      client.channels.cache
+        .get(channelId)
+        .send(`Micah Coded ${micahCommits} days in a row.`);
+      client.channels.cache
+        .get(channelId)
+        .send(`Hannah Coded ${hannahCommits} days in a row`);
+      let message =
+        "Both are equal so Micah is winning because he coded the bot";
+      if (micahCommits > hannahCommits) {
+        message = "Micah is winning";
+      }
+      if (hannahCommits > micahCommits) {
+        message = "Hannah is winning";
+      }
+      client.channels.cache.get(channelId).send(message);
+    },
+    null,
+    true,
+    "America/New_York"
+  );
+  // job.start();
+});
+module.exports = client;
