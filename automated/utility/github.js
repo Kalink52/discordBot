@@ -87,3 +87,5 @@ function github(client) {
   );
 }
 module.exports = github;
+
+// TODO: allow user to edit a config file with their github to add to commit streak
